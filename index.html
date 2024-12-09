@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scatterplot with Brushing</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        svg {
+            width: 40vw;
+            height: 40vw;
+        }
+        div {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .list-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 50vw;
+            padding: 20px;
+            background-color: #f3f3f3;
+            border-left: 1px solid #ccc;
+            overflow-y: auto;
+        }
+        .list-container h3 {
+            font-size: 18px;
+            color: #444;
+            margin-bottom: 10px;
+        }
+        #selected-list {
+            padding: 10px;
+            list-style-type: none;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            max-height: 100%;
+            overflow-y: auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            flex-grow: 1;
+        }
+        #selected-list li {
+            padding: 10px;
+            margin: 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            color: #555;
+        }
+        #selected-list li:last-child {
+            border-bottom: none;
+        }
+        ul {
+            margin-left: 100px;
+            margin-right: 100px;
+        }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/scatterplot.problem.js"></script>
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+<div>
+    <svg viewBox="0 0 1000 1000" id="figure1"></svg>
+    <svg viewBox="0 0 1000 1000" id="figure2"></svg>
+</div>
+<div class="list-container">
+    <h3>Selected Models</h3>
+    <ul id="selected-list"></ul>
+</div>
+
+<script>
+    // Load data
+    d3.csv("./data/car_sample_data.csv", d => ({
+        ...d,
+        Price: +d.Price,
+        MPG: +d.MPG,
+        Weight: +d.Weight,
+        Horsepower: +d.Horsepower,
+        "Engine Size": +d.EngineSizeCI
+    })).then(data => {
+        // Create the scatter plots
+        scatter_plot(
+            data,
+            "#figure1",
+            "MPG vs Price",
+            "Price",
+            "MPG",
+            "Weight",
+            [],
+            "Country",
+            150
+        );
+
+        scatter_plot(
+            data,
+            "#figure2",
+            "MPG vs Engine Size",
+            "Engine Size",
+            "MPG",
+            "Weight",
+            [],
+            "Country",
+            150
+        );
+
+        // Handle mousemove event to update the selected models list
+        document.addEventListener("mousemove", () => {
+            const listBox = d3.select("#selected-list");
+            const selectedPoints = Array.from(document.querySelectorAll(".selected"));
+            
+            // Get unique selected models
+            const models = [...new Set(selectedPoints.map(d => d.getAttribute("data-model")))];
+            
+            // Clear previous list items
+            listBox.selectAll("li").remove();
+            
+            if (models.length > 0) {
+                // Add list items for each selected model
+                listBox.selectAll(".listVals")
+                    .data(models)
+                    .enter()
+                    .append("li")
+                    .attr("class", "listVals")
+                    .text(model => {
+                        const selectedData = data.find(item => item.Model === model);
+                        return selectedData
+                            ? `${selectedData.Model} - ${selectedData.Type}`
+                            : `Model: ${model} (Data not found)`;
+                    });
+            }
+        });
+    });
+</script>
+</body>
+</html>
